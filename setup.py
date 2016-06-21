@@ -15,13 +15,9 @@ setup(
     description=('TBD'),
     long_description=open('README.md').read(),
     install_requires=['generaltools',
-                      'PIL'
     ],
-    # entry_points = {"console_scripts": [
-    #       'ad_relink = astro_data_store.astro_data_store:relink',
-    #       'ad_project = astro_data_store.astro_data_store:project',
-    #       'ad_require = astro_data_store.astro_data_store:require',
-    #       'ad_legacy = astro_data_store.astro_data_store:move_legacy'
-    #         ]
-    #                   },
+    entry_points = {"console_scripts": [
+          'monitor_inbox = copy_sd_card.monitor_inbox:main'
+            ]
+                      },
 )
