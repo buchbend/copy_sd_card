@@ -3,21 +3,23 @@ import pyinotify
 import datetime
 
 from generaltools import log_tools
-from .tools import get_date_taken
+from .tools import get_file_hash
+
 PICTURES = "/home/buchbend/scratch/Pictures"
 INBOX = "INBOX"
-LOG = log_tools.init_logger("monitor_inbox")
+LOG = log_tools.init_logger("monitor_inbox", "/var/log/monitor_inbox")
 
+FILE_TYPES = ["JPG", "MP4"]
 
 class MyEventHandler(pyinotify.ProcessEvent):
 
     def __init__(self, database):
-        self.conn = sqlite3.connect('{}/{}'.format(PICTURES, database))
+        self.conn = sqlite3.connect(database)
 
         self.c = self.conn.cursor()
         try:
             self.c.execute('''CREATE TABLE transferred (file_name text,
-            date_taken date, date_transferred date)
+            hash text, date_transferred date)
             ''')
         except sqlite3.OperationalError:
             LOG.debug("Table exists already")
@@ -36,14 +38,21 @@ class MyEventHandler(pyinotify.ProcessEvent):
         print "CLOSE_WRITE event:", event.pathname
 
     def process_IN_CREATE(self, event):
-        date_taken = get_date_taken(event.pathname)
-        date_transferred = datetime.datetime.now()
-        self.c.execute('''INSERT INTO transferred VALUES (\"{}\", 
-        \"{}\", \"{}\")'''.format(event.pathname,
-                                  date_taken,
-                                  date_transferred))
-        print "CREATE event:", event.pathname
-        self.conn.commit()
+        LOG.debug("CREATE event: {}".format(event.pathname))
+        try:
+            file_ending = event.pathname.split(".")[-1].upper()
+        except:
+            LOG.debug("{} Does not seem to be a file".format(event.pathname))
+            return 1
+        if event.pathname.split(".")[-1].upper() in FILE_TYPES:
+            hash_ = get_file_hash(event.pathname)
+            date_transferred = datetime.datetime.now()
+            self.c.execute('''INSERT INTO transferred VALUES (\"{}\", 
+            \"{}\", \"{}\")'''.format(event.pathname,
+                                      hash_,
+                                      date_transferred))
+            self.conn.commit()
+            return 0
 
     def process_IN_DELETE(self, event):
         print "DELETE event:", event.pathname
@@ -55,11 +64,7 @@ class MyEventHandler(pyinotify.ProcessEvent):
         print "OPEN event:", event.pathname
 
 def main():
-    PICTURES = "/home/buchbend/scratch/Pictures"
-    INBOX = "INBOX"
-    LOG = log_tools.init_logger("monitor_inbox")
-
-    database = "{}/.uta.db"
+    database = "{}/.uta.db".format(PICTURES)
     # watch manager
     wm = pyinotify.WatchManager()
     wm.add_watch("{}/{}".format(PICTURES, INBOX),

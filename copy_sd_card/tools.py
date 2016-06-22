@@ -1,4 +1,8 @@
-from PIL import Image
+import hashlib
 
-def get_date_taken(path):
-    return Image.open(path)._getexif()[36867]
+def get_file_hash(path):
+    hasher = hashlib.md5()
+    with open(path, "rb") as afile:
+        buf = afile.read()
+        hasher.update(buf)
+    return hasher.hexdigest()

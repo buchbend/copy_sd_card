@@ -14,10 +14,12 @@ setup(
     license='LICENSE.txt',
     description=('TBD'),
     long_description=open('README.md').read(),
-    install_requires=['generaltools',
-    ],
+    # install_requires=['generaltools',
+#    ],
     entry_points = {"console_scripts": [
-          'monitor_inbox = copy_sd_card.monitor_inbox:main'
+          'monitor_inbox = copy_sd_card.monitor_inbox:main',
+          'copy_sd_card = copy_sd_card.copy_sd_card:main',
+          'transfer_inbox = copy_sd_card.transfer_inbox:main'
             ]
                       },
 )
